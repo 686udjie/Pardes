@@ -13,8 +13,12 @@ body {
 
 #bgImage {
   position: fixed;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  transform-origin: center center;
   z-index: -1;
+  pointer-events: none;
+  display: none;
 }
 
 #bgVideo {

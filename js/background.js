@@ -7,12 +7,54 @@ function bgFilter(brightness, blur) {
   return f;
 }
 
-function setBodyBg(url) {
-  document.body.style.backgroundImage = "url(\"" + url.replace(/"/g, '\\"') + "\")";
-  document.body.style.backgroundSize = "cover";
-  document.body.style.backgroundPosition = "center";
-  document.body.style.backgroundRepeat = "no-repeat";
-  document.body.style.backgroundAttachment = "fixed";
+function computeZoomPan(vW, vH, mW, mH, scale, xc, yc, rotation) {
+  var Rm = mW / mH;
+  var Rv = vW / vH;
+  var isRotated90 = (rotation % 180 !== 0);
+  
+  var sW, sH;
+  if (isRotated90) {
+    var RmPrime = 1 / Rm;
+    if (RmPrime > Rv) {
+      sH = vH;
+      sW = vH * RmPrime;
+    } else {
+      sW = vW;
+      sH = vW / RmPrime;
+    }
+  } else {
+    if (Rm > Rv) {
+      sH = vH;
+      sW = vH * Rm;
+    } else {
+      sW = vW;
+      sH = vW / Rm;
+    }
+  }
+  
+  var vW_visual = sW * scale;
+  var vH_visual = sH * scale;
+  
+  var tx = vW_visual * (0.5 - xc);
+  var ty = vH_visual * (0.5 - yc);
+  
+  var maxTx = (vW_visual - vW) / 2;
+  var maxTy = (vH_visual - vH) / 2;
+  
+  var txConstrained = Math.max(-maxTx, Math.min(maxTx, tx));
+  var tyConstrained = Math.max(-maxTy, Math.min(maxTy, ty));
+  
+  var actualXc = 0.5 - (txConstrained / vW_visual);
+  var actualYc = 0.5 - (tyConstrained / vH_visual);
+  
+  return {
+    layoutW: isRotated90 ? sH : sW,
+    layoutH: isRotated90 ? sW : sH,
+    tx: txConstrained,
+    ty: tyConstrained,
+    xc: actualXc,
+    yc: actualYc
+  };
 }
 
 Pardes.Background = (function() {
@@ -26,18 +68,32 @@ Pardes.Background = (function() {
 
   function setBackground(kind, url, state) {
     var bgVideo = Pardes.$("bgVideo");
+    var bgImage = Pardes.$("bgImage");
     if (_bgObjectUrl && _bgObjectUrl !== url) {
       try { URL.revokeObjectURL(_bgObjectUrl); } catch {} _bgObjectUrl = null;
     }
 
     if (kind === "image") {
-      setBodyBg(url);
-      if (bgVideo) { bgVideo.hidden = true; bgVideo.style.display = "none"; bgVideo.src = ""; }
+      if (bgImage) {
+        bgImage.src = url;
+        bgImage.hidden = false;
+        bgImage.style.display = "block";
+      }
+      if (bgVideo) {
+        bgVideo.hidden = true;
+        bgVideo.style.cssText = "";
+        bgVideo.src = "";
+      }
     } else if (kind === "video" && bgVideo) {
-      document.body.style.backgroundImage = "";
+      if (bgImage) {
+        bgImage.hidden = true;
+        bgImage.style.cssText = "";
+        bgImage.src = "";
+      }
+      bgVideo.muted = state ? !state.sound : true;
       bgVideo.src = url;
       bgVideo.hidden = false;
-      bgVideo.style.display = "block";
+      bgVideo.play().catch(function() {});
     }
 
     saveBgState(kind, url, state);
@@ -45,59 +101,130 @@ Pardes.Background = (function() {
 
   function resetToDefault() {
     var bgVideo = Pardes.$("bgVideo");
-    document.body.style.backgroundImage = "";
-    if (bgVideo) { bgVideo.hidden = true; bgVideo.style.display = "none"; bgVideo.src = ""; }
+    var bgImage = Pardes.$("bgImage");
+    if (bgVideo) {
+      bgVideo.hidden = true;
+      bgVideo.style.cssText = "";
+      bgVideo.src = "";
+      bgVideo.muted = true;
+    }
+    if (bgImage) {
+      bgImage.hidden = true;
+      bgImage.style.cssText = "";
+      bgImage.src = "";
+    }
     localStorage.removeItem("bg.state.v2");
     Pardes.idbDel().catch(function() {});
     if (_bgObjectUrl) { try { URL.revokeObjectURL(_bgObjectUrl); } catch {} _bgObjectUrl = null; }
+    
     var popover = Pardes.$("bgPopover");
     if (popover) popover.hidden = true;
+    
     if (bgVideo) {
+      bgVideo.muted = true;
       bgVideo.src = "assets/wallpaper.mp4";
       bgVideo.hidden = false;
-      bgVideo.style.display = "block";
+      bgVideo.play().catch(function() {});
     }
+  }
+
+  function updatePageBackground() {
+    var bgRaw = localStorage.getItem("bg.state.v2");
+    if (!bgRaw) return;
+    var bg = JSON.parse(bgRaw);
+    
+    var zoom = bg.zoom || 1;
+    var xc = bg.bgX !== undefined ? bg.bgX / 100 : 0.5;
+    var yc = bg.bgY !== undefined ? bg.bgY / 100 : 0.5;
+    var rotation = bg.rotation || 0;
+    
+    var activeEl = null;
+    var mW = 0, mH = 0;
+    
+    if (bg.kind === "video") {
+      activeEl = Pardes.$("bgVideo");
+      if (activeEl) {
+        mW = activeEl.videoWidth;
+        mH = activeEl.videoHeight;
+      }
+    } else {
+      activeEl = Pardes.$("bgImage");
+      if (activeEl) {
+        mW = activeEl.naturalWidth;
+        mH = activeEl.naturalHeight;
+      }
+    }
+    
+    if (!activeEl || !mW || !mH) return;
+    
+    var vW = window.innerWidth;
+    var vH = window.innerHeight;
+    
+    var res = computeZoomPan(vW, vH, mW, mH, zoom, xc, yc, rotation);
+    
+    activeEl.style.width = res.layoutW + "px";
+    activeEl.style.height = res.layoutH + "px";
+    activeEl.style.position = "fixed";
+    activeEl.style.left = "50%";
+    activeEl.style.top = "50%";
+    activeEl.style.transform = "translate(-50%, -50%) translate(" + res.tx + "px, " + res.ty + "px) rotate(" + rotation + "deg) scale(" + zoom + ")";
+    activeEl.style.filter = bgFilter(bg.brightness, bg.blur);
   }
 
   async function loadPersistedBackground() {
     var bgRaw = localStorage.getItem("bg.state.v2");
     if (!bgRaw) return;
     var bg = JSON.parse(bgRaw);
-    if (bg.value) return;
 
-    var blob;
-    try { blob = await Pardes.idbGet(); } catch {}
-    if (!blob) return;
+    var url = bg.value;
+    if (!url) {
+      var blob;
+      try { blob = await Pardes.idbGet(); } catch {}
+      if (!blob) return;
+      url = URL.createObjectURL(blob);
+      _bgObjectUrl = url;
+    }
 
-    var url = URL.createObjectURL(blob);
-    _bgObjectUrl = url;
+    var bgVideo = Pardes.$("bgVideo");
+    var bgImage = Pardes.$("bgImage");
 
     if (bg.kind === "video") {
-      var v = Pardes.$("bgVideo");
-      if (v) {
-        v.src = url;
-        v.hidden = false;
-        v.style.display = "block";
-        v.style.objectPosition = (bg.bgX || 50) + "% " + (bg.bgY || 50) + "%";
-        if (bg.blur || (bg.brightness && bg.brightness !== 100)) {
-          v.style.filter = bgFilter(bg.brightness, bg.blur);
-        }
-        v.muted = !bg.sound;
+      if (bgVideo) {
+        bgVideo.muted = !bg.sound;
+        bgVideo.src = url;
+        bgVideo.hidden = false;
+        bgVideo.style.display = "block";
+        bgVideo.play().catch(function() {
+          bgVideo.muted = true;
+          bgVideo.play().catch(function() {});
+        });
+      }
+      if (bgImage) {
+        bgImage.hidden = true;
+        bgImage.style.display = "none";
+        bgImage.src = "";
       }
     } else {
-      setBodyBg(url);
-      document.body.style.backgroundPosition = (bg.bgX || 50) + "% " + (bg.bgY || 50) + "%";
-      document.body.style.filter = bgFilter(bg.brightness, bg.blur);
+      if (bgImage) {
+        bgImage.src = url;
+        bgImage.hidden = false;
+        bgImage.style.display = "block";
+      }
+      if (bgVideo) {
+        bgVideo.hidden = true;
+        bgVideo.style.display = "none";
+        bgVideo.src = "";
+      }
     }
   }
 
   /* Background focus editor state */
   var focusState = {
     kind: "", value: "", bgX: 50, bgY: 50,
-    blur: 0, brightness: 100, rotation: 0, sound: false
+    blur: 0, brightness: 100, rotation: 0, sound: false, zoom: 1
   };
 
-  function openFocusEditor(kind, value) {
+  function openFocusEditor(kind, value, savedState) {
     var bgFocusImg = Pardes.$("bgFocusImg");
     var bgFocusVid = Pardes.$("bgFocusVid");
     var bgFocusBrightness = Pardes.$("bgFocusBrightness");
@@ -106,10 +233,45 @@ Pardes.Background = (function() {
     var bgFocusBlurValue = Pardes.$("bgFocusBlurValue");
     var bgFocusBlurWrap = Pardes.$("bgFocusBlurWrap");
     var bgFocusSoundToggle = Pardes.$("bgFocusSoundToggle");
+    var bgFocusZoom = Pardes.$("bgFocusZoom");
+    var bgFocusZoomValue = Pardes.$("bgFocusZoomValue");
+
+    /* Size the card to match the viewport aspect ratio */
+    var card = document.querySelector(".bg-focus-card");
+    if (card) {
+      var vAspect = window.innerWidth / window.innerHeight;
+      /* Reserve vertical space for the chrome: ~110px header + controls + actions */
+      var CHROME_H = 178;
+      var maxCardW = window.innerWidth - 40;
+      var maxCardH = window.innerHeight - 40;
+      var previewH, cardW, cardH;
+      /* Try fitting by width first */
+      cardW = Math.min(maxCardW, 1200);
+      previewH = Math.round(cardW / vAspect);
+      cardH = previewH + CHROME_H;
+      if (cardH > maxCardH) {
+        cardH = maxCardH;
+        previewH = cardH - CHROME_H;
+        cardW = Math.round(previewH * vAspect);
+      }
+      card.style.setProperty("--bg-focus-card-w", cardW + "px");
+      card.style.setProperty("--bg-focus-card-h", cardH + "px");
+      card.style.width = cardW + "px";
+      card.style.height = cardH + "px";
+    }
+
+    var state = savedState || {};
 
     focusState = {
-      kind: kind, value: value, bgX: 50, bgY: 50,
-      blur: 0, brightness: 100, rotation: 0, sound: false
+      kind: kind,
+      value: value,
+      bgX: state.bgX !== undefined ? state.bgX : 50,
+      bgY: state.bgY !== undefined ? state.bgY : 50,
+      blur: state.blur || 0,
+      brightness: state.brightness !== undefined ? state.brightness : 100,
+      rotation: state.rotation || 0,
+      sound: state.sound || false,
+      zoom: state.zoom || 1
     };
 
     if (kind === "image") {
@@ -118,35 +280,87 @@ Pardes.Background = (function() {
       bgFocusVid.hidden = true;
       if (bgFocusVid.pause) bgFocusVid.pause();
     } else if (kind === "video") {
+      if (bgFocusVid) {
+        bgFocusVid.muted = !focusState.sound;
+      }
       bgFocusVid.src = value;
       bgFocusVid.hidden = false;
       bgFocusVid.play().catch(function() {});
       bgFocusImg.hidden = true;
     }
 
-    bgFocusBrightness.value = 100;
-    bgFocusBrightnessValue.textContent = "100%";
-    bgFocusBlurInput.value = 0;
-    bgFocusBlurValue.textContent = "0px";
-    bgFocusBlurWrap.hidden = true;
-    bgFocusSoundToggle.hidden = kind !== "video";
-    bgFocusSoundToggle.textContent = "Sound: Off";
+    bgFocusBrightness.value = focusState.brightness;
+    bgFocusBrightnessValue.textContent = focusState.brightness + "%";
+    
+    bgFocusBlurInput.value = focusState.blur || 12;
+    bgFocusBlurValue.textContent = focusState.blur + "px";
+    bgFocusBlurWrap.hidden = !focusState.blur;
+    
+    var bgFocusBlurToggle = Pardes.$("bgFocusBlurToggle");
+    if (bgFocusBlurToggle) {
+      bgFocusBlurToggle.textContent = focusState.blur ? "Blur: On" : "Blur: Off";
+    }
 
-    resetPreviewTransform();
+    bgFocusSoundToggle.hidden = kind !== "video";
+    bgFocusSoundToggle.textContent = focusState.sound ? "Sound: On" : "Sound: Off";
+
+    if (bgFocusZoom) {
+      bgFocusZoom.value = Math.round(focusState.zoom * 100);
+    }
+    if (bgFocusZoomValue) {
+      bgFocusZoomValue.textContent = Math.round(focusState.zoom * 100) + "%";
+    }
+
+    applyPreviewFilter();
+    
     var bgFocus = Pardes.$("bgFocus");
     if (bgFocus) bgFocus.hidden = false;
+  }
+
+  function updatePreviewTransform() {
+    var img = Pardes.$("bgFocusImg");
+    var vid = Pardes.$("bgFocusVid");
+    var activeEl = focusState.kind === "image" ? img : vid;
+    if (!activeEl) return;
+    
+    var mW = focusState.kind === "image" ? activeEl.naturalWidth : activeEl.videoWidth;
+    var mH = focusState.kind === "image" ? activeEl.naturalHeight : activeEl.videoHeight;
+    if (!mW || !mH) return;
+    
+    var preview = Pardes.$("bgFocusPreview");
+    if (!preview) return;
+    var rect = preview.getBoundingClientRect();
+    var vW = rect.width;
+    var vH = rect.height;
+    if (!vW || !vH) return;
+    
+    var zoom = focusState.zoom || 1;
+    var xc = focusState.bgX / 100;
+    var yc = focusState.bgY / 100;
+    var rotation = focusState.rotation || 0;
+    
+    var res = computeZoomPan(vW, vH, mW, mH, zoom, xc, yc, rotation);
+    
+    activeEl.style.width = res.layoutW + "px";
+    activeEl.style.height = res.layoutH + "px";
+    activeEl.style.transform = "translate(-50%, -50%) translate(" + res.tx + "px, " + res.ty + "px) rotate(" + rotation + "deg) scale(" + zoom + ")";
+    
+    focusState.bgX = res.xc * 100;
+    focusState.bgY = res.yc * 100;
   }
 
   function resetPreviewTransform() {
     var bgFocusImg = Pardes.$("bgFocusImg");
     var bgFocusVid = Pardes.$("bgFocusVid");
     if (bgFocusImg) {
-      bgFocusImg.style.transform = "scale(1)";
-      bgFocusImg.style.objectPosition = "50% 50%";
+      bgFocusImg.style.transform = "";
+      bgFocusImg.style.width = "";
+      bgFocusImg.style.height = "";
     }
     if (bgFocusVid) {
-      bgFocusVid.style.transform = "scale(1)";
-      bgFocusVid.style.objectPosition = "50% 50%";
+      bgFocusVid.style.transform = "";
+      bgFocusVid.style.width = "";
+      bgFocusVid.style.height = "";
     }
   }
 
@@ -189,6 +403,22 @@ Pardes.Background = (function() {
     var bgRotateLeft = Pardes.$("bgRotateLeft");
     var bgRotateRight = Pardes.$("bgRotateRight");
     var bgFocusSoundToggle = Pardes.$("bgFocusSoundToggle");
+    var bgFocusZoom = Pardes.$("bgFocusZoom");
+    var bgFocusZoomValue = Pardes.$("bgFocusZoomValue");
+
+    var bgFocusImg = Pardes.$("bgFocusImg");
+    var bgFocusVid = Pardes.$("bgFocusVid");
+
+    if (bgFocusImg) {
+      bgFocusImg.addEventListener("load", function() {
+        updatePreviewTransform();
+      });
+    }
+    if (bgFocusVid) {
+      bgFocusVid.addEventListener("loadedmetadata", function() {
+        updatePreviewTransform();
+      });
+    }
 
     if (bgFocusBackdrop) bgFocusBackdrop.addEventListener("click", closeFocusEditor);
     if (bgFocusClose) bgFocusClose.addEventListener("click", closeFocusEditor);
@@ -203,30 +433,13 @@ Pardes.Background = (function() {
           brightness: focusState.brightness,
           rotation: focusState.rotation,
           sound: focusState.sound,
+          zoom: focusState.zoom
         };
 
-        if (focusState.kind === "image") {
-          document.body.style.backgroundPosition = state.bgX + "% " + state.bgY + "%";
-          document.body.style.filter = bgFilter(state.brightness, state.blur);
-          if (state.rotation !== 0) {
-            document.body.style.transform = "rotate(" + state.rotation + "deg)";
-          } else {
-            document.body.style.transform = "";
-          }
-          var existing = JSON.parse(localStorage.getItem("bg.state.v2") || "{}");
-          setBackground("image", existing.value || focusState.value, state);
-        } else if (focusState.kind === "video") {
-          var vid = Pardes.$("bgVideo");
-          if (vid) {
-            vid.style.objectPosition = state.bgX + "% " + state.bgY + "%";
-            vid.style.filter = bgFilter(state.brightness, state.blur);
-            vid.muted = !state.sound;
-          }
-          var existing2 = JSON.parse(localStorage.getItem("bg.state.v2") || "{}");
-          setBackground("video", existing2.value || focusState.value, state);
-        }
-
+        var existing = JSON.parse(localStorage.getItem("bg.state.v2") || "{}");
+        setBackground(focusState.kind, existing.value || focusState.value, state);
         closeFocusEditor();
+        updatePageBackground();
       });
     }
 
@@ -256,36 +469,35 @@ Pardes.Background = (function() {
       });
     }
 
+    if (bgFocusZoom) {
+      bgFocusZoom.addEventListener("input", function() {
+        focusState.zoom = Number(bgFocusZoom.value) / 100;
+        if (bgFocusZoomValue) {
+          bgFocusZoomValue.textContent = bgFocusZoom.value + "%";
+        }
+        updatePreviewTransform();
+      });
+    }
+
     if (bgFocusCenter) {
       bgFocusCenter.addEventListener("click", function() {
         focusState.bgX = 50;
         focusState.bgY = 50;
-        var img = Pardes.$("bgFocusImg");
-        var vid = Pardes.$("bgFocusVid");
-        if (img && !img.hidden) img.style.objectPosition = "50% 50%";
-        if (vid && !vid.hidden) vid.style.objectPosition = "50% 50%";
+        updatePreviewTransform();
       });
     }
 
     if (bgRotateLeft) {
       bgRotateLeft.addEventListener("click", function() {
         focusState.rotation = (focusState.rotation - 90) % 360;
-        var img = Pardes.$("bgFocusImg");
-        var vid = Pardes.$("bgFocusVid");
-        var t = "rotate(" + focusState.rotation + "deg) scale(1)";
-        if (img && !img.hidden) img.style.transform = t;
-        if (vid && !vid.hidden) vid.style.transform = t;
+        updatePreviewTransform();
       });
     }
 
     if (bgRotateRight) {
       bgRotateRight.addEventListener("click", function() {
         focusState.rotation = (focusState.rotation + 90) % 360;
-        var img = Pardes.$("bgFocusImg");
-        var vid = Pardes.$("bgFocusVid");
-        var t = "rotate(" + focusState.rotation + "deg) scale(1)";
-        if (img && !img.hidden) img.style.transform = t;
-        if (vid && !vid.hidden) vid.style.transform = t;
+        updatePreviewTransform();
       });
     }
 
@@ -293,36 +505,109 @@ Pardes.Background = (function() {
       bgFocusSoundToggle.addEventListener("click", function() {
         focusState.sound = !focusState.sound;
         bgFocusSoundToggle.textContent = focusState.sound ? "Sound: On" : "Sound: Off";
+        var bgFocusVid = Pardes.$("bgFocusVid");
+        if (bgFocusVid) {
+          bgFocusVid.muted = !focusState.sound;
+        }
       });
     }
 
     /* Drag to reposition in focus editor */
     if (bgFocusPreview) {
       var isDragging = false;
-      var startX, startY, startBgX, startBgY;
+      var startX, startY;
+      var startTx, startTy;
 
       bgFocusPreview.addEventListener("mousedown", function(e) {
         if (e.target.closest("button")) return;
+        
+        var img = Pardes.$("bgFocusImg");
+        var vid = Pardes.$("bgFocusVid");
+        var activeEl = focusState.kind === "image" ? img : vid;
+        if (!activeEl) return;
+        
+        var mW = focusState.kind === "image" ? activeEl.naturalWidth : activeEl.videoWidth;
+        var mH = focusState.kind === "image" ? activeEl.naturalHeight : activeEl.videoHeight;
+        if (!mW || !mH) return;
+        
         isDragging = true;
         startX = e.clientX;
         startY = e.clientY;
-        startBgX = focusState.bgX;
-        startBgY = focusState.bgY;
+        
+        var rect = bgFocusPreview.getBoundingClientRect();
+        var vW = rect.width;
+        var vH = rect.height;
+        var zoom = focusState.zoom || 1;
+        var xc = focusState.bgX / 100;
+        var yc = focusState.bgY / 100;
+        var rotation = focusState.rotation || 0;
+        
+        var res = computeZoomPan(vW, vH, mW, mH, zoom, xc, yc, rotation);
+        startTx = res.tx;
+        startTy = res.ty;
+        
         bgFocusPreview.style.cursor = "grabbing";
       });
 
       document.addEventListener("mousemove", function(e) {
         if (!isDragging) return;
-        var dx = e.clientX - startX;
-        var dy = e.clientY - startY;
-        var rect = bgFocusPreview.getBoundingClientRect();
-        focusState.bgX = Math.max(0, Math.min(100, startBgX + (dx / rect.width) * 100));
-        focusState.bgY = Math.max(0, Math.min(100, startBgY + (dy / rect.height) * 100));
-        var objPos = focusState.bgX + "% " + focusState.bgY + "%";
+        
         var img = Pardes.$("bgFocusImg");
         var vid = Pardes.$("bgFocusVid");
-        if (img && !img.hidden) img.style.objectPosition = objPos;
-        if (vid && !vid.hidden) vid.style.objectPosition = objPos;
+        var activeEl = focusState.kind === "image" ? img : vid;
+        if (!activeEl) return;
+        
+        var mW = focusState.kind === "image" ? activeEl.naturalWidth : activeEl.videoWidth;
+        var mH = focusState.kind === "image" ? activeEl.naturalHeight : activeEl.videoHeight;
+        if (!mW || !mH) return;
+        
+        var rect = bgFocusPreview.getBoundingClientRect();
+        var vW = rect.width;
+        var vH = rect.height;
+        
+        var dx = e.clientX - startX;
+        var dy = e.clientY - startY;
+        
+        var targetTx = startTx + dx;
+        var targetTy = startTy + dy;
+        
+        var rotation = focusState.rotation || 0;
+        var isRotated90 = (rotation % 180 !== 0);
+        var Rm = mW / mH;
+        var Rv = vW / vH;
+        
+        var sW, sH;
+        if (isRotated90) {
+          var RmPrime = 1 / Rm;
+          if (RmPrime > Rv) {
+            sH = vH;
+            sW = vH * RmPrime;
+          } else {
+            sW = vW;
+            sH = vW / RmPrime;
+          }
+        } else {
+          if (Rm > Rv) {
+            sH = vH;
+            sW = vH * Rm;
+          } else {
+            sW = vW;
+            sH = vW / Rm;
+          }
+        }
+        
+        var vW_visual = sW * (focusState.zoom || 1);
+        var vH_visual = sH * (focusState.zoom || 1);
+        
+        var xc = 0.5 - (targetTx / vW_visual);
+        var yc = 0.5 - (targetTy / vH_visual);
+        
+        var res = computeZoomPan(vW, vH, mW, mH, focusState.zoom || 1, xc, yc, rotation);
+        
+        focusState.bgX = res.xc * 100;
+        focusState.bgY = res.yc * 100;
+        
+        activeEl.style.transform = "translate(-50%, -50%) translate(" + res.tx + "px, " + res.ty + "px) rotate(" + rotation + "deg) scale(" + (focusState.zoom || 1) + ")";
       });
 
       document.addEventListener("mouseup", function() {
@@ -331,6 +616,25 @@ Pardes.Background = (function() {
           bgFocusPreview.style.cursor = "grab";
         }
       });
+
+      /* Scroll wheel zoom */
+      bgFocusPreview.addEventListener("wheel", function(e) {
+        e.preventDefault();
+        var zoomStep = e.deltaY * -0.002;
+        var newZoom = Math.max(1, Math.min(5, (focusState.zoom || 1) + zoomStep));
+        focusState.zoom = newZoom;
+        
+        var bgFocusZoom = Pardes.$("bgFocusZoom");
+        var bgFocusZoomValue = Pardes.$("bgFocusZoomValue");
+        if (bgFocusZoom) {
+          bgFocusZoom.value = Math.round(newZoom * 100);
+        }
+        if (bgFocusZoomValue) {
+          bgFocusZoomValue.textContent = Math.round(newZoom * 100) + "%";
+        }
+        
+        updatePreviewTransform();
+      }, { passive: false });
     }
   }
 
@@ -378,7 +682,7 @@ Pardes.Background = (function() {
         var isVideo = file.type.startsWith("video/");
         var kind = isVideo ? "video" : "image";
 
-        try { await Pardes.idbPut(file); } catch (e) { console.warn("IDB put failed", e); }
+        try { await Pardes.idbPut(file); } catch (err) { void err; }
 
         var url = URL.createObjectURL(file);
         openFocusEditor(kind, url);
@@ -387,17 +691,30 @@ Pardes.Background = (function() {
         bgUpload.value = "";
       }, true);
     }
+
+    var bgImage = Pardes.$("bgImage");
+    if (bgImage) {
+      bgImage.addEventListener("load", updatePageBackground);
+    }
+    var bgVideo = Pardes.$("bgVideo");
+    if (bgVideo) {
+      bgVideo.addEventListener("loadedmetadata", updatePageBackground);
+    }
+
     loadPersistedBackground();
 
     /* Fallback to default wallpaper when no background is persisted */
     if (!localStorage.getItem("bg.state.v2")) {
       var vid = Pardes.$("bgVideo");
       if (vid) {
+        vid.muted = true;
         vid.src = "assets/wallpaper.mp4";
         vid.hidden = false;
-        vid.style.display = "block";
+        vid.play().catch(function() {});
       }
     }
+
+    window.addEventListener("resize", updatePageBackground);
   }
 
   return {

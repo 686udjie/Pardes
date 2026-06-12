@@ -14,7 +14,7 @@
 </head>
 
 <body>
-  <div id="bgImage"></div>
+  <img id="bgImage" alt="" hidden />
   <video id="bgVideo" muted loop autoplay playsinline></video>
 
   <div class="app" id="app">
@@ -56,6 +56,11 @@
             <span id="bgFocusBrightnessLabel">Brightness</span>
             <input id="bgFocusBrightness" type="range" min="50" max="150" step="1" value="100" />
             <span id="bgFocusBrightnessValue">100%</span>
+          </div>
+          <div class="bg-focus-brightness" id="bgFocusZoomWrap">
+            <span id="bgFocusZoomLabel">Zoom</span>
+            <input id="bgFocusZoom" type="range" min="100" max="500" step="5" value="100" />
+            <span id="bgFocusZoomValue">100%</span>
           </div>
         </div>
         <div class="bg-focus-actions">
