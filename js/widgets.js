@@ -279,9 +279,11 @@ Pardes.Widgets = (function() {
 
     function renderFavorites() {
       var favs = JSON.parse(Pardes.getLocal("pardes.favorites", "[]"));
+      favs = favs.filter(function(f) { return f && f.url; });
       favSlots.innerHTML = "";
 
-      for (let i = 0; i < 3; i++) {
+      var count = favs.length + 1;
+      for (let i = 0; i < count; i++) {
         var slot = document.createElement("div");
         slot.className = "fav-slot" + (favs[i] ? "" : " fav-empty");
         slot.dataset.index = i;
@@ -300,6 +302,7 @@ Pardes.Widgets = (function() {
           clear.addEventListener("click", function(e) {
             e.stopPropagation();
             var arr = JSON.parse(Pardes.getLocal("pardes.favorites", "[]"));
+            arr = arr.filter(function(f) { return f && f.url; });
             arr.splice(i, 1);
             Pardes.setLocal("pardes.favorites", JSON.stringify(arr));
             renderFavorites();
@@ -317,6 +320,7 @@ Pardes.Widgets = (function() {
             if (!url) return;
             var title = prompt("Enter title:", url);
             var arr = JSON.parse(Pardes.getLocal("pardes.favorites", "[]"));
+            arr = arr.filter(function(f) { return f && f.url; });
             arr[i] = { url: url, title: title || url, icon: "" };
             Pardes.setLocal("pardes.favorites", JSON.stringify(arr));
             renderFavorites();

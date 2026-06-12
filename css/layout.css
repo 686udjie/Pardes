@@ -33,7 +33,7 @@ body {
 
 .workspace {
   width: 100%;
-  height: calc(100% - 98px);
+  height: 100%;
   position: relative;
 }
 

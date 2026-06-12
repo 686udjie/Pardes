@@ -6,6 +6,176 @@ Pardes.Customize = (function() {
     { id: "actions", label: "Actions" },
   ];
 
+  /* Drag state variables */
+  var dragWidget = null;
+  var startPointerX = 0;
+  var startPointerY = 0;
+  var startWidgetLeft = 0;
+  var startWidgetTop = 0;
+  var dashRect = null;
+  var holdTimer = null;
+  var startX = 0;
+  var startY = 0;
+  var pointerId = null;
+
+  function applyPositions() {
+    var isDesktop = window.innerWidth > 1100;
+    var meta = Pardes.Widgets.getMeta();
+    meta.forEach(function(m) {
+      var el = Pardes.$(m.id);
+      if (!el) return;
+      var pos = layoutConfig.positions[m.id];
+      if (pos && isDesktop) {
+        el.style.position = "absolute";
+        el.style.gridColumn = "auto";
+        el.style.gridRow = "auto";
+        el.style.left = pos.left + "px";
+        el.style.top = pos.top + "px";
+        el.style.margin = "0";
+      } else {
+        el.style.position = "";
+        el.style.gridColumn = "";
+        el.style.gridRow = "";
+        el.style.left = "";
+        el.style.top = "";
+        el.style.margin = "";
+      }
+    });
+  }
+
+  function startDrag(widget, e) {
+    dragWidget = widget;
+    
+    // Coordinates computed at pointerdown (pre-scale layout)
+    startPointerX = startX;
+    startPointerY = startY;
+
+    widget.style.position = "absolute";
+    widget.style.gridColumn = "auto";
+    widget.style.gridRow = "auto";
+    widget.style.left = startWidgetLeft + "px";
+    widget.style.top = startWidgetTop + "px";
+    widget.style.margin = "0";
+    widget.style.zIndex = "99999";
+    widget.classList.add("widget-dragging");
+
+    document.body.classList.add("dragging-widget");
+
+    window.addEventListener("pointermove", onDragMove);
+    window.addEventListener("pointerup", onDragEnd);
+    window.addEventListener("pointercancel", onDragEnd);
+  }
+
+  function onDragMove(e) {
+    if (!dragWidget || !dashRect) return;
+    var deltaX = e.clientX - startPointerX;
+    var deltaY = e.clientY - startPointerY;
+
+    var newLeft = startWidgetLeft + deltaX;
+    var newTop = startWidgetTop + deltaY;
+
+    var widgetWidth = dragWidget.offsetWidth;
+    var widgetHeight = dragWidget.offsetHeight;
+
+    var minLeft = -dashRect.left;
+    var maxLeft = window.innerWidth - dashRect.left - widgetWidth;
+    var minTop = -dashRect.top;
+    var maxTop = window.innerHeight - dashRect.top - widgetHeight;
+
+    newLeft = Math.max(minLeft, Math.min(newLeft, maxLeft));
+    newTop = Math.max(minTop, Math.min(newTop, maxTop));
+
+    dragWidget.style.left = newLeft + "px";
+    dragWidget.style.top = newTop + "px";
+  }
+
+  function onDragEnd() {
+    if (dragWidget) {
+      dragWidget.classList.remove("widget-dragging");
+      dragWidget.style.zIndex = "";
+      
+      var widgetId = dragWidget.id;
+      var currentLeft = parseFloat(dragWidget.style.left);
+      var currentTop = parseFloat(dragWidget.style.top);
+
+      if (!isNaN(currentLeft) && !isNaN(currentTop)) {
+        layoutConfig.positions[widgetId] = { left: currentLeft, top: currentTop };
+        saveLayoutConfig();
+      }
+
+      dragWidget = null;
+    }
+
+    document.body.classList.remove("dragging-widget");
+
+    window.removeEventListener("pointermove", onDragMove);
+    window.removeEventListener("pointerup", onDragEnd);
+    window.removeEventListener("pointercancel", onDragEnd);
+  }
+
+  function onPointerDown(e) {
+    var layoutPanel = Pardes.$("layoutPanel");
+    if (!layoutPanel || layoutPanel.dataset.open !== "1") return;
+
+    var widget = e.target.closest(".widget");
+    if (!widget) return;
+
+    if (e.target.closest("button, input, select, textarea, a, .fav-slot, .todo-del, .fav-clear, .cal-nav")) return;
+
+    // Capture initial bounding rects and mouse coordinates BEFORE applying .widget-holding scale transformation
+    var dashArea = Pardes.$("dashArea");
+    if (dashArea) {
+      dashRect = dashArea.getBoundingClientRect();
+      var widgetRect = widget.getBoundingClientRect();
+      startWidgetLeft = widgetRect.left - dashRect.left;
+      startWidgetTop = widgetRect.top - dashRect.top;
+    }
+
+    startX = e.clientX;
+    startY = e.clientY;
+    pointerId = e.pointerId;
+
+    widget.classList.add("widget-holding");
+
+    holdTimer = setTimeout(function() {
+      widget.classList.remove("widget-holding");
+      startDrag(widget, e);
+      cleanupHold();
+    }, 500);
+
+    window.addEventListener("pointermove", onPointerMoveBeforeDrag);
+    window.addEventListener("pointerup", onPointerUpBeforeDrag);
+    window.addEventListener("pointercancel", onPointerUpBeforeDrag);
+  }
+
+  function onPointerMoveBeforeDrag(e) {
+    if (e.pointerId !== pointerId) return;
+    var deltaX = e.clientX - startX;
+    var deltaY = e.clientY - startY;
+    if (Math.hypot(deltaX, deltaY) > 10) {
+      var widget = e.target.closest(".widget");
+      if (widget) widget.classList.remove("widget-holding");
+      cleanupHold();
+    }
+  }
+
+  function onPointerUpBeforeDrag(e) {
+    if (e.pointerId !== pointerId) return;
+    var widget = e.target.closest(".widget");
+    if (widget) widget.classList.remove("widget-holding");
+    cleanupHold();
+  }
+
+  function cleanupHold() {
+    if (holdTimer) {
+      clearTimeout(holdTimer);
+      holdTimer = null;
+    }
+    window.removeEventListener("pointermove", onPointerMoveBeforeDrag);
+    window.removeEventListener("pointerup", onPointerUpBeforeDrag);
+    window.removeEventListener("pointercancel", onPointerUpBeforeDrag);
+  }
+
   function loadLayoutConfig() {
     try {
       var raw = localStorage.getItem("layout.config.v1");
@@ -120,6 +290,13 @@ Pardes.Customize = (function() {
   function init() {
     loadLayoutConfig();
     applyHiddenFromBoot();
+    applyPositions();
+    window.addEventListener("resize", applyPositions);
+
+    var dashArea = Pardes.$("dashArea");
+    if (dashArea) {
+      dashArea.addEventListener("pointerdown", onPointerDown);
+    }
 
     var layoutToggle = Pardes.$("layoutToggle");
     var layoutPanel = Pardes.$("layoutPanel");
@@ -179,7 +356,15 @@ Pardes.Customize = (function() {
         var meta = Pardes.Widgets.getMeta();
         meta.forEach(function(m) {
           var el = Pardes.$(m.id);
-          if (el) el.style.display = "";
+          if (el) {
+            el.style.display = "";
+            el.style.position = "";
+            el.style.gridColumn = "";
+            el.style.gridRow = "";
+            el.style.left = "";
+            el.style.top = "";
+            el.style.margin = "";
+          }
         });
         renderWidgetList();
       });

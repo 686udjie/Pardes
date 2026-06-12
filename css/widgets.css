@@ -595,14 +595,16 @@ body.layout-editing .date-size-toggle:hover {
 .fav-slot:active { transform: scale(0.95); }
 
 .fav-num {
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   font-weight: 300;
-  font-size: 32px;
+  font-size: 28px;
   color: var(--muted);
   line-height: 1;
+  padding-bottom: 2px;
 }
 
 .fav-ico {
