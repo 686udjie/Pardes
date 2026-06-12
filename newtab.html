@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pardes</title>
+  <!-- Pardes new tab page — loads modular CSS and JS -->
+  <link rel="icon" type="image/webp" href="icons/icon192.webp" />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/reset.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/widgets.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/customize.css" />
+</head>
+
+<body>
+  <div id="bgImage"></div>
+  <video id="bgVideo" muted loop autoplay playsinline></video>
+
+  <div class="app" id="app">
+    <input type="file" id="bgUpload" accept="image/*,video/*" hidden />
+
+    <!-- BG PICKER POPOVER -->
+    <div class="bg-popover" id="bgPopover" hidden>
+      <div class="bg-menu-title">Background</div>
+      <button type="button" class="bgp-btn" id="bgPickFile">Upload</button>
+      <div class="bgp-row">
+        <input id="bgUrlInput" class="bgp-input" placeholder="Put direct URL" />
+        <button type="button" class="bgp-btn" id="bgUrlApply">Apply</button>
+      </div>
+      <button type="button" class="bgp-btn bgp-ghost" id="bgResetDefault">Reset to default</button>
+    </div>
+
+    <!-- BG FOCUS EDITOR -->
+    <div class="bg-focus" id="bgFocus" hidden>
+      <div class="bg-focus-backdrop" id="bgFocusBackdrop"></div>
+      <div class="bg-focus-card" role="dialog" aria-modal="true">
+        <div class="bg-focus-head">
+          <div class="bg-focus-title">Choose visible area</div>
+          <button class="bg-focus-x" id="bgFocusClose" type="button">✕</button>
+        </div>
+        <div class="bg-focus-preview" id="bgFocusPreview">
+          <img id="bgFocusImg" alt="" hidden />
+          <video id="bgFocusVid" hidden autoplay muted loop playsinline></video>
+          <div class="bg-focus-hint">Drag to reposition</div>
+        </div>
+        <div class="bg-focus-controls">
+          <button class="bg-focus-btn" id="bgFocusBlurToggle" type="button">Blur: Off</button>
+          <button class="bg-focus-btn" id="bgFocusSoundToggle" type="button">Sound: Off</button>
+          <div class="bg-focus-brightness" id="bgFocusBlurWrap" hidden>
+            <span id="bgFocusBlurLabel">Blur</span>
+            <input id="bgFocusBlurInput" type="range" min="1" max="40" step="1" value="12" />
+            <span id="bgFocusBlurValue">12px</span>
+          </div>
+          <div class="bg-focus-brightness" id="bgFocusBrightnessWrap">
+            <span id="bgFocusBrightnessLabel">Brightness</span>
+            <input id="bgFocusBrightness" type="range" min="50" max="150" step="1" value="100" />
+            <span id="bgFocusBrightnessValue">100%</span>
+          </div>
+        </div>
+        <div class="bg-focus-actions">
+          <button class="bg-focus-btn ghost" id="bgFocusCenter" type="button">Center</button>
+          <button class="bg-focus-btn bg-rot" id="bgRotateLeft" type="button">↺</button>
+          <button class="bg-focus-btn bg-rot" id="bgRotateRight" type="button">↻</button>
+          <div class="bg-focus-spacer"></div>
+          <button class="bg-focus-btn ghost" id="bgFocusCancel" type="button">Cancel</button>
+          <button class="bg-focus-btn primary" id="bgFocusApply" type="button">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="workspace" id="workspace">
+      <div class="widgets" id="widgets">
+        <main class="dashboard">
+          <div class="dash-area" id="dashArea">
+
+            <!-- TODO WIDGET -->
+            <section class="card todo widget" id="todoCard" data-widget="todo">
+              <h2>To do</h2>
+              <div class="todo-input-row">
+                <input id="todoInput" placeholder="Add task..." />
+                <button id="todoDateBtn" type="button" aria-label="Pick task date">Date</button>
+                <input id="todoDate" type="date" lang="en-GB" aria-label="Task date" />
+                <button id="todoAddBtn" type="button">Add</button>
+              </div>
+              <ul id="todoList"></ul>
+            </section>
+
+            <!-- FAVORITES WIDGET -->
+            <section class="card fav widget" id="favCard" data-widget="favorites" data-title="Favorites">
+              <h2>Favorites</h2>
+              <div class="fav-slots" id="favSlots"></div>
+            </section>
+
+            <!-- DATE WIDGET -->
+            <section class="card date-card widget" id="dateCard" data-widget="date">
+              <div class="date-mini">
+                <div class="date-weekday" id="dateWeekday">THURSDAY</div>
+                <div class="date-day" id="dateDay">25</div>
+                <div class="date-month" id="dateMonth">DEC</div>
+              </div>
+              <div class="date-cal">
+                <div class="cal-head">
+                  <button class="cal-nav" id="calPrev" type="button">◀</button>
+                  <div class="cal-title" id="calTitle">January 2026</div>
+                  <button class="cal-nav" id="calNext" type="button">▶</button>
+                </div>
+                <div class="cal-weekdays">
+                  <div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div><div>Su</div>
+                </div>
+                <div class="cal-grid" id="calGrid"></div>
+              </div>
+              <button class="date-size-toggle" id="btnDateSizeToggle" type="button" title="Toggle large view" hidden>⤢</button>
+            </section>
+
+            <!-- CLOCK WIDGET -->
+            <section class="card clock widget" id="clockCard" data-widget="clock">
+              <div class="clock-digital">
+                <div class="clock-time" id="clockTime">20:36:50</div>
+                <div class="clock-date" id="clockDate">Thursday, December 25, 2025</div>
+              </div>
+              <div class="clock-analog">
+                <svg id="analogClockSvg" viewBox="-50 -50 100 100" preserveAspectRatio="xMidYMid meet" aria-label="Analog clock">
+                  <circle r="48" class="analog-face" fill="none" />
+                  <g id="analogTicks"></g>
+                  <line id="hourHand" class="hand hour" x1="0" y1="0" x2="0" y2="-28" />
+                  <line id="minuteHand" class="hand minute" x1="0" y1="0" x2="0" y2="-38" />
+                  <line id="secondHand" class="hand second" x1="0" y1="0" x2="0" y2="-42" />
+                  <circle r="3" class="analog-center" />
+                </svg>
+              </div>
+              <button class="clock-minutes-toggle" type="button" title="Toggle HH:MM format">:59</button>
+              <button class="clock-mode-toggle widget-control-btn" id="btnClockModeToggle" type="button" title="Toggle analog/digital" hidden>⤢</button>
+            </section>
+
+          </div>
+        </main>
+      </div>
+
+      <!-- CUSTOMIZE DRAWER -->
+      <aside class="layout-panel" id="layoutPanel" data-open="0">
+        <div class="layout-container">
+          <div class="layout-sidebar">
+            <div class="layout-sidebar-head">
+              <div class="layout-title">Customize</div>
+            </div>
+            <div class="layout-menu" id="layoutMenu"></div>
+          </div>
+
+          <div class="layout-content">
+            <div class="layout-content-body">
+              <!-- WIDGETS TAB -->
+              <div class="layout-tab" id="layoutTabWidgets" data-tab="widgets">
+                <div class="layout-list" id="layoutList"></div>
+              </div>
+
+              <!-- ACTIONS TAB -->
+              <div class="layout-tab" id="layoutTabActions" data-tab="actions">
+                <div class="layout-actions-group">
+                  <div class="layout-action-row">
+                    <div class="layout-action-desc">Change background</div>
+                    <button type="button" class="layout-btn" id="layoutChangeBgBtn">Background</button>
+                  </div>
+
+                  <div class="layout-action-row">
+                    <div class="layout-action-desc">Widgets transparency</div>
+                    <div class="layout-action-controls layout-opacity-control">
+                      <input id="folderOpacitySlider" class="layout-opacity-slider" type="range" min="0" max="100" step="1" value="100" />
+                      <span id="folderOpacityValue" class="layout-opacity-value">100%</span>
+                    </div>
+                  </div>
+
+                  <div class="layout-action-row">
+                    <div class="layout-action-desc">Switch sidebar mode</div>
+                    <button type="button" class="layout-btn" id="sidebarModeToggle">Sidebar: Dynamic</button>
+                  </div>
+
+                  <div class="layout-action-row">
+                    <div class="layout-action-desc">Toggle time format</div>
+                    <button type="button" class="layout-btn" id="layoutClockFormatToggle">24h / 12h</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="layout-footer">
+              <button type="button" class="layout-btn" id="layoutReset">Reset layout</button>
+              <button type="button" class="layout-btn layout-btn-primary" id="layoutDoneBtn">Done</button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="sidebar-hotzone"></div>
+
+    <!-- SIDEBAR -->
+    <nav class="sidebar-pill" id="sidebarPill">
+      <button class="sb-btn" id="layoutToggle" title="Customize" aria-label="Customize">⚙</button>
+    </nav>
+  </div>
+
+  <script src="js/helpers.js"></script>
+  <script src="js/background.js"></script>
+  <script src="js/widgets.js"></script>
+  <script src="js/customize.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

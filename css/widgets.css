@@ -1,0 +1,699 @@
+/* Pardes widget styles: date, clock, todo, favorites, sidebar */
+.date-card {
+  width: 200px;
+  height: 165px;
+  padding: 16px 18px;
+  border-radius: 26px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.date-weekday {
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.date-day {
+  font-size: 58px;
+  line-height: 1;
+  font-weight: 1000;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.date-month {
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+#dateCard.date-wide {
+  width: var(--col2);
+  height: var(--col2);
+  max-height: var(--col2);
+  padding: 8px;
+}
+
+.date-card.date-wide .date-day { font-size: 72px; }
+.date-card.date-wide .date-month { font-size: 26px; }
+.date-card.date-wide .date-weekday { font-size: 13px; }
+
+#dateCard .date-size-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 16px;
+}
+
+body.layout-editing #dateCard .date-size-toggle { display: flex; }
+
+#dateCard .date-size-toggle:hover { filter: brightness(1.2); }
+
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-top: 8px;
+}
+
+.cal-grid div {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 0;
+  border-radius: 4px;
+}
+
+.cal-grid div.today {
+  background: rgba(79, 70, 229, 0.35);
+  color: #fff;
+  font-weight: 800;
+}
+
+.cal-grid div.other-month { opacity: 0.3; }
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.cal-title { font-weight: 700; font-size: 13px; }
+
+.cal-nav {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.cal-nav:hover { background: var(--inner); }
+
+.cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.cal-weekdays div {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.clock-time {
+  font-size: 46px;
+  font-weight: 1000;
+  line-height: 1;
+  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  gap: 8px;
+}
+
+#clockCard.is-ampm { width: 260px; }
+
+.clock-ampm {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+
+.clock-date {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  width: 100%;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+#clockCard .clock-mode-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: none;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+}
+
+#clockCard .clock-minutes-toggle {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: none;
+  z-index: 5;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+  align-items: center;
+  justify-content: center;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+body.layout-editing #clockCard .clock-mode-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.layout-editing #clockCard .clock-minutes-toggle { display: flex; }
+
+body.layout-editing .widget-control-btn,
+body.layout-editing .date-size-toggle {
+  width: 32px !important;
+  height: 32px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  border: 1px solid var(--btn-br) !important;
+  background: var(--btn-bg) !important;
+  color: var(--text) !important;
+  display: grid !important;
+  place-items: center !important;
+  line-height: 1 !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+}
+
+body.layout-editing .widget-control-btn:hover,
+body.layout-editing .date-size-toggle:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+#clockCard .clock-mode-toggle:hover { filter: brightness(1.2); }
+#clockCard .clock-minutes-toggle:hover { filter: brightness(1.2); }
+
+.clock-analog {
+  width: 100%;
+  height: 100%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+#clockCard.is-analog .clock-digital { display: none; }
+
+#clockCard.is-analog .clock-analog { display: flex; }
+
+#clockCard .clock-analog svg {
+  width: 100%;
+  height: 100%;
+  max-width: 180px;
+  max-height: 180px;
+}
+
+#clockCard .analog-face {
+  stroke: rgba(255,255,255,0.18);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+#clockCard .analog-tick {
+  stroke: rgba(255,255,255,0.12);
+  stroke-width: 1;
+}
+
+#clockCard .hand {
+  stroke-linecap: round;
+  stroke: rgba(255,255,255,0.95);
+  fill: none;
+}
+
+#clockCard .hand.hour {
+  stroke: rgba(255,255,255,0.95);
+  stroke-width: 3;
+}
+
+#clockCard .hand.minute {
+  stroke: rgba(255,255,255,0.92);
+  stroke-width: 2;
+}
+
+#clockCard .hand.second {
+  stroke: #ff4d4f;
+  stroke-width: 1;
+}
+
+#clockCard .analog-center {
+  fill: var(--text);
+  stroke: none;
+}
+
+#clockCard .clock-mode-toggle {
+  background: var(--btn-bg);
+  border-color: var(--btn-br);
+  color: var(--text);
+}
+
+#clockCard .clock-minutes-toggle {
+  background: var(--btn-bg);
+  border-color: var(--btn-br);
+  color: var(--text);
+}
+
+.todo #todoInput {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 12px;
+  border: 1px solid var(--card-br);
+  background: var(--inner);
+  color: var(--text);
+  outline: none;
+}
+
+.todo .todo-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.todo .todo-input-row #todoInput {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+
+.todo #todoDateBtn {
+  flex: 0 1 clamp(72px, 28%, 96px);
+  width: clamp(72px, 28%, 96px);
+  min-width: 72px;
+  padding: 8px 7px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.10);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.todo #todoDateBtn.is-set { background: var(--inner); }
+
+.todo #todoDate {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  outline: none;
+}
+
+.todo #todoDateBtn:hover { filter: brightness(1.08); }
+
+.todo #todoAddBtn {
+  flex: 0 0 auto;
+  min-width: 46px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--card-br);
+  background: var(--inner);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.todo #todoAddBtn:hover { filter: brightness(1.2); }
+
+.todo #todoInput::placeholder { color: var(--muted); }
+
+.todo #todoList {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todo #todoList li {
+  border-radius: 14px;
+  background: var(--inner);
+  border: 1px solid var(--card-br);
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.todo #todoList label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  cursor: pointer;
+}
+
+.todo #todoList input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  accent-color: rgba(255,255,255,0.85);
+}
+
+.todo #todoList span {
+  font-size: 14px;
+  line-height: 1.25;
+  font-weight: 700;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.todo .todo-date {
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.75;
+  white-space: nowrap;
+}
+
+.todo #todoList li.done span {
+  opacity: .55;
+  text-decoration: line-through;
+}
+
+.todo .todo-del {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.todo .todo-del:hover { filter: brightness(1.08); }
+
+#todoCard {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+#todoCard h2 { margin: 0; line-height: 1.1; }
+
+#todoCard #todoInput {
+  flex: 1 1 0;
+  width: auto;
+  min-height: 34px;
+  padding: 7px 10px;
+  border-radius: 10px;
+}
+
+#todoCard .todo-input-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+#todoCard #todoDateBtn {
+  flex: 0 1 clamp(64px, 26%, 84px);
+  width: clamp(64px, 26%, 84px);
+  min-width: 64px;
+  min-height: 34px;
+  padding: 7px 6px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+#todoCard #todoAddBtn {
+  min-width: 44px;
+  height: 34px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+#todoCard #todoList {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  padding-right: 6px;
+  gap: 8px;
+}
+
+#todoCard #todoList li {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  border-radius: 12px;
+  gap: 8px;
+}
+
+#todoCard .todo-main {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+#todoCard #todoList input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+}
+
+#todoCard .todo-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+#todoCard .todo-date {
+  font-size: 11px;
+  line-height: 1;
+  opacity: 0.78;
+  white-space: nowrap;
+}
+
+#todoCard .todo-del {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+#todoCard #todoList::-webkit-scrollbar { width: 8px; }
+
+#todoCard #todoList::-webkit-scrollbar-thumb {
+  background: var(--inner);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+#todoCard #todoList::-webkit-scrollbar-track { background: transparent; }
+
+.card.fav { padding: 12px; }
+
+.fav-slots {
+  display: grid;
+  grid-template-columns: repeat(3, 43px);
+  gap: 20px;
+  padding: 10px;
+  flex: 1;
+  min-height: 0;
+  justify-content: center;
+}
+
+.fav-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border-radius: 10px;
+  background: var(--btn-bg);
+  border: 1px solid var(--card-br);
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  min-height: 0;
+  aspect-ratio: 1;
+}
+
+.fav-slot:hover { background: var(--inner); }
+
+.fav-slot:active { transform: scale(0.95); }
+
+.fav-num {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-weight: 300;
+  font-size: 32px;
+  color: var(--muted);
+  line-height: 1;
+}
+
+.fav-ico {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
+.fav-clear {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  background: var(--btn-bg);
+  border: 1px solid var(--card-br);
+  color: var(--text);
+  cursor: pointer;
+  display: none;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  top: 3px;
+  right: 3px;
+  z-index: 10;
+}
+
+body.layout-editing .fav-clear { display: flex; }
+
+.fav-clear:hover { filter: brightness(1.2); }
+
+.sidebar-hotzone {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 100vh;
+  z-index: 1000;
+}
+
+.sidebar-pill {
+  position: fixed;
+  left: 12px;
+  top: 50%;
+  transform: translate(-90px, -50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform .25s ease, opacity .25s ease;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 10px;
+  border-radius: 28px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-br);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--shadow);
+}
+
+.sidebar-hotzone:hover + .sidebar-pill,
+.sidebar-pill:hover {
+  transform: translate(0, -50%);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.sidebar-static .sidebar-pill {
+  transform: translate(0, -50%);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+body.sidebar-static .sidebar-hotzone { pointer-events: none; }
+
+.sidebar-pill .sb-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 18px;
+  border: 1px solid var(--btn-br);
+  background: var(--btn-bg);
+  color: var(--text);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.sidebar-pill .sb-btn:hover { filter: brightness(1.08); }
+
+.hidden { display: none !important; }

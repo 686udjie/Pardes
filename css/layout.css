@@ -1,0 +1,195 @@
+/* Pardes app layout, grid, responsive breakpoints */
+.app {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+body {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+#bgImage {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+}
+
+#bgVideo {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.workspace {
+  width: 100%;
+  height: calc(100% - 98px);
+  position: relative;
+}
+
+#widgets {
+  width: 100%;
+  height: 100%;
+}
+
+#workspace {
+  position: relative;
+  overflow: hidden;
+}
+
+.card {
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1px solid var(--card-br);
+  color: var(--text);
+  backdrop-filter: blur(30px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow: var(--shadow);
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  padding: 16px 18px;
+}
+
+.card h2 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.card button {
+  font: inherit;
+}
+
+.dashboard {
+  width: 100%;
+  height: 100%;
+}
+
+.dash-area {
+  width: min(var(--pagew), calc(100vw - 80px));
+  margin: 0 auto;
+  position: relative;
+  height: calc(100vh - 150px);
+  min-height: 520px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--col2) var(--col3);
+  grid-auto-rows: min-content;
+  gap: 24px;
+  align-items: start;
+}
+
+body.sidebar-static .dash-area {
+  width: min(var(--pagew), calc(100vw - 140px));
+  margin-left: 80px;
+  margin-right: auto;
+}
+
+#todoCard {
+  grid-column: 3;
+  grid-row: 2;
+  width: var(--col3);
+  height: var(--wh-todo);
+  max-height: var(--wh-todo);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#dateCard {
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: start;
+  width: var(--col2);
+  height: var(--col2);
+  max-height: var(--col2);
+  position: relative;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#clockCard {
+  grid-column: 2;
+  grid-row: 3;
+  justify-self: start;
+  width: var(--col2);
+  height: var(--wh-clock);
+  max-height: var(--wh-clock);
+  position: relative;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#clockCard.is-analog {
+  width: var(--col2) !important;
+  height: var(--col2) !important;
+  max-height: var(--col2) !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.layout-editing .dash-area .widget,
+body.layout-editing #clockCard {
+  transition: none !important;
+}
+
+#favCard {
+  grid-column: 2;
+  grid-row: 4;
+  justify-self: start;
+  width: var(--col2);
+}
+
+@media (max-width: 1100px) {
+  .dash-area {
+    grid-template-columns: 1fr;
+    width: calc(100vw - 30px) !important;
+    margin: 0 auto !important;
+    max-width: calc(100vw - 30px) !important;
+    height: auto !important;
+    gap: 16px;
+  }
+
+  body.sidebar-static .dash-area {
+    width: calc(100vw - 30px) !important;
+    margin: 0 auto !important;
+  }
+
+  #todoCard, #favCard, #dateCard, #clockCard {
+    grid-column: 1 !important;
+    grid-row: auto !important;
+    justify-self: start !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: auto !important;
+    box-sizing: border-box !important;
+  }
+
+  #todoCard { height: auto !important; max-height: none !important; }
+  #dateCard { height: auto !important; max-height: none !important; justify-self: auto !important; }
+  #dateCard.date-wide { height: auto !important; max-height: none !important; }
+  #clockCard { height: auto !important; max-height: none !important; }
+  #clockCard.is-analog { height: auto !important; width: 100% !important; }
+  #favCard { height: auto !important; max-height: none !important; }
+}
+
+@media (max-width: 600px) {
+  .dash-area {
+    width: 100%;
+    padding: 0 8px;
+    box-sizing: border-box;
+    gap: 12px;
+  }
+
+  #todoCard, #favCard, #dateCard, #clockCard {
+    width: 100% !important;
+  }
+}

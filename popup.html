@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pardes Quick Settings</title>
+<style>
+:root { color-scheme: dark; }
+body {
+  margin: 0;
+  font-family: Segoe UI, Arial, sans-serif;
+  width: 280px;
+  color: #edf2ff;
+  background: radial-gradient(140% 120% at 0% 0%, rgba(96,165,250,0.28), transparent 58%),
+    radial-gradient(120% 120% at 100% 100%, rgba(14,116,144,0.25), transparent 62%),
+    linear-gradient(160deg, #09122a 0%, #0d1f3f 45%, #102a52 100%);
+}
+* { box-sizing: border-box; }
+.popup {
+  margin: 10px; padding: 14px; display: grid; gap: 10px;
+  border-radius: 16px; border: 1px solid rgba(255,255,255,0.22);
+  background: linear-gradient(165deg, rgba(255,255,255,0.2), rgba(255,255,255,0.07));
+  box-shadow: 0 22px 38px rgba(3,9,24,0.48), inset 0 1px 0 rgba(255,255,255,0.35);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+}
+.title { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: 0.01em; }
+.section { display: grid; gap: 10px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.label {
+  font-size: 13px; font-weight: 600; color: rgba(241,245,249,0.98);
+  white-space: nowrap;
+}
+.btn {
+  height: 32px; padding: 0 14px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(135deg, rgba(30,30,48,0.88), rgba(20,20,38,0.78));
+  color: #fff; font-weight: 700; font-size: 12px; cursor: pointer;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+input[type="range"] { width: 100px; accent-color: #4f46e5; }
+</style>
+</head>
+<body>
+<main class="popup">
+  <h1 class="title">Pardes</h1>
+  <div class="section">
+    <div class="row">
+      <span class="label">Sidebar</span>
+      <button id="sidebarToggle" class="btn">Dynamic</button>
+    </div>
+    <div class="row">
+      <span class="label">Transparency</span>
+      <input id="opacitySlider" type="range" min="0" max="100" value="100" />
+    </div>
+    <div class="row">
+      <span class="label">Clock format</span>
+      <button id="clockToggle" class="btn">24h</button>
+    </div>
+  </div>
+</main>
+<script>
+var getLocal=function(k,d){try{return localStorage.getItem(k)??d}catch{return d}};
+var setLocal=function(k,v){try{localStorage.setItem(k,v)}catch{}};
+var sidebarBtn=document.getElementById("sidebarToggle");
+sidebarBtn?.addEventListener("click",function(){
+  var next=getLocal("pardes.sidebarMode","dynamic")==="dynamic"?"static":"dynamic";
+  setLocal("pardes.sidebarMode",next);
+  sidebarBtn.textContent=next==="dynamic"?"Dynamic":"Static";
+});
+var opacitySlider=document.getElementById("opacitySlider");
+opacitySlider?.addEventListener("input",function(){setLocal("widgets.opacity.v1",opacitySlider.value)});
+var clockBtn=document.getElementById("clockToggle");
+clockBtn?.addEventListener("click",function(){
+  var next=getLocal("pardes.clock24h","true")==="true"?"false":"true";
+  setLocal("pardes.clock24h",next);
+  clockBtn.textContent=next==="true"?"24h":"12h";
+});
+(function(){
+  var s=getLocal("pardes.sidebarMode","dynamic");
+  var c=getLocal("pardes.clock24h","true");
+  if(sidebarBtn)sidebarBtn.textContent=s==="dynamic"?"Dynamic":"Static";
+  if(clockBtn)clockBtn.textContent=c==="true"?"24h":"12h";
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+/* Pardes CSS custom properties / dark glass theme */
+:root {
+  --pagew: 1280px;
+  --gap: 24px;
+  --radius: 28px;
+  --col2: 220px;
+  --col3: 420px;
+  --wh-clock: 140px;
+  --wh-todo: 200px;
+  --text: rgba(255,255,255,0.92);
+  --muted: rgba(255,255,255,0.65);
+  --card-bg: rgba(25,25,35,0.72);
+  --card-br: rgba(255,255,255,0.12);
+  --inner: rgba(0,0,0,0.35);
+  --btn-bg: rgba(255,255,255,0.08);
+  --btn-br: rgba(255,255,255,0.10);
+  --shadow: 0 14px 40px rgba(0,0,0,0.40);
+}
